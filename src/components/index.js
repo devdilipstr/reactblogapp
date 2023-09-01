@@ -1,0 +1,18 @@
+export { default as About } from "./About";
+export { default as AdminDrag } from "./AdminDrag";
+export { default as Panel } from "./AdminPanel";
+export { default as Blog } from "./Blog";
+export { default as BlogIntro } from "./BlogIntro";
+export { default as Blogpop } from "./Blogpop";
+export { default as Contact } from "./Contact";
+export { default as Contactdetail } from "./Contactdetail";
+export { default as Contactform } from "./Contactform";
+export { default as Dside } from "./Dside";
+export { default as Files } from "./Files";
+export { default as Footer } from "./Footer";
+export { default as Nav } from "./Nav";
+export { default as Newsletter } from "./Newsletter";
+export { default as SecureIn } from "./SecureIn";
+export { default as SecureInForm } from "./SecureInForm";
+export { default as Showcase } from "./Showcase";
+export {default as Blogs} from "./Blogs";
