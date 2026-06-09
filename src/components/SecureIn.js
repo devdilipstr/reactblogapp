@@ -15,7 +15,7 @@ function SecureIn({ panel, username, previlage, num }) {
   }, []);
 
   return (
-    <Grid container justify="center" spacing={8}>
+    <Grid style={{marginBottom:'10rem'}} container justify="center" spacing={8}>
       
       <Grid item xs="10" justify="center" style={{ display: "flex" }}>
         

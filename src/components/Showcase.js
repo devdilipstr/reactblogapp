@@ -1,47 +1,96 @@
-import React from "react";
-import Grid from "@material-ui/core/Grid";
-import { makeStyles } from "@material-ui/core/styles";
+import React, { useState, useEffect } from "react";
+import { Grid, makeStyles, Button } from "@material-ui/core";
 import Newsletter from "./Newsletter";
 import "../style.css";
-import { motion } from "framer-motion";
-const styles = makeStyles({
-  root: {
+import { showcaseService } from "../services";
+
+const style = makeStyles({
+  heading: {
     display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
     alignItems: "center",
-    justify: "center",
-    height: "auto",
+    textAlign: "center",
   },
+  tag: { textAlign: "center" },
+  svg: { width: "100%", margin: "0" },
+  showcase: { display: "flex", justifyContent: "center" },
 });
-const Showcase = ({ img, heading, tag, bcc }) => {
-  const item = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } };
-  const classes = styles();
+
+function Showcase() {
+  const classes = style();
+  const [showcase, setShowcase] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchShowcase();
+  }, []);
+
+  const fetchShowcase = async () => {
+    try {
+      const response = await showcaseService.getActive();
+      if (response.success && response.showcases && response.showcases.length > 0) {
+        setShowcase(response.showcases[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching showcase:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div style={{ textAlign: 'center', padding: '5%' }}>Loading...</div>;
+  }
+
+  if (!showcase) {
+    return null; // Don't show anything if no showcase
+  }
+
   return (
-    <motion.div variants={item} style={{ transition: "ease-in-out 10s" }}>
-      
-      <Grid container xs="12" justify="center" className={classes.root}>
-        
-        <Grid
-          item
-          xs="12"
-          md="6"
-          justify="center"
-          style={{ display: "flex", opacity: ".9" }}
-        >
-          
-          <img alt="" src={img} className="banner" />
-        </Grid>
-        <Grid item xs="12" style={{ textAlign: "center" ,marginBottom:"20px"}}>
-          
-          <h1 style={{ fontSize: "50px", fontWeight: "bold",lineHeight:"65px",marginTop:"5px",overflow:"hidden"}}>
-            {heading}
-          </h1>
-          <p style={{ marginLeft: "11px",fontSize:"20px",color:"grey" }}>{tag}</p> <Newsletter bcc={bcc} />
-        </Grid>
-        <div
-          style={{ display: "flex", justifyContent: "center", margin: "0" }}
-        ></div>
+    <Grid
+      container
+      xs="12"
+      justify="center"
+      spacing={5}
+      className={classes.showcase}
+    >
+      <Grid item xs="12" md="6">
+        <img
+          src={showcase.image?.url || showcase.doddle}
+          alt={showcase.image?.alt || showcase.title}
+          className={classes.svg}
+        />
       </Grid>
-    </motion.div>
+      <Grid
+        item
+        xs="12"
+        md="5"
+        className={classes.heading}
+        style={{ padding: "5%" }}
+      >
+        <h1>{showcase.title || showcase.head}</h1>
+        <p className={classes.tag}>{showcase.subtitle || showcase.tag}</p>
+        {showcase.description && (
+          <p className={classes.tag}>{showcase.description}</p>
+        )}
+        {showcase.ctaButton?.enabled && showcase.ctaButton?.link && (
+          <Button
+            variant="contained"
+            style={{
+              background: showcase.backgroundColor || "#333",
+              color: showcase.textColor || "#fff",
+              marginTop: "20px",
+            }}
+            href={showcase.ctaButton.link}
+          >
+            {showcase.ctaButton.text || "Learn More"}
+          </Button>
+        )}
+        <Newsletter />
+      </Grid>
+    </Grid>
   );
-};
+}
+
 export default Showcase;

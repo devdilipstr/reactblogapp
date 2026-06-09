@@ -1,19 +1,18 @@
 import React, { useState } from "react";
 import { Drawer, Button, TextField } from "@material-ui/core";
 import "../style.css";
-import firebase from "./firebase/config";
-function Dside({ open, Close, fdoddle,setstatus }) {
+
+function Dside({ open, Close, fdoddle, setstatus }) {
   const [doddle, updatedoddle] = useState(null);
   const [head, updatehead] = useState(null);
   const [tag, updatetag] = useState(null);
+
   const uploaddoddle = () => {
-    let text = document.getElementById("doddle");
-    text.textContent = "";
-    console.log(doddle);
-    const sendDoodle = firebase.database().ref("doddle");
-    const doddleimg = {doddle,head,tag};
-    sendDoodle.set(doddleimg);
+    // Removed Firebase - implement with backend API if needed
+    console.log({ doddle, head, tag });
+    alert("Doodle upload feature needs backend API implementation");
   };
+
   return (
     <Drawer
       anchor="right"

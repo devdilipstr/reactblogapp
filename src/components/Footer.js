@@ -15,7 +15,7 @@ import {
 import "../style.css";
 import { grey } from "@material-ui/core/colors";
 const styles = makeStyles({
-  root: { marginTop: "10%" },
+  root: { marginTop: "0" },
   list: { listStyle: "none" },
   a:{
     color:"grey"
@@ -39,10 +39,10 @@ function Footer() {
   };
   return (
     <div
-      style={{ background: "#f7f7f7", textAlign:"center",marginTop: "19%",height:"auto",padding:"5%",display:"flex",alignItems:"center",flexDirection:"column"}}
+      style={{ position:"relative",background: "#f7f7f7", textAlign:"center",marginTop: "0",height:"auto",padding:"5%",display:"flex",alignItems:"center",flexDirection:"column",zIndex:'1000'}}
       className={classes.root}
     >  
-       <div style={{marginTop:"5%"}}> 
+       <div> 
        
        <h3 variant="h6" style={{ opacity: ".6" }}>
                 <span style={{fontSize:"200%",textAlign:"center"}}>Developed By</span>

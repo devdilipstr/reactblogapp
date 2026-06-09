@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Button, List, Checkbox, Drawer } from "@material-ui/core";
+import { Button, List, Checkbox, Drawer, Menu, MenuItem } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import "../style.css";
 import MenuRoundedIcon from "@material-ui/icons/MenuRounded";
+import AccountCircleIcon from "@material-ui/icons/AccountCircle";
 import { logo } from "../icons";
 import { motion } from "framer-motion";
 import { Link, NavLink } from "react-router-dom";
@@ -41,13 +42,14 @@ const useStyle = makeStyles({
   nav: { zIndex: "1200" },
   active: { backgroundColor: "#f2f2f2" },
 });
-function Nav({ check, doddle, previlage,blogs}) {
+function Nav({ check, doddle, previlage, blogs, user, onLogout, admin }) {
   const [nav, setNav] = useState(false);
   const [side, setside] = useState(false);
   const [dside, setdside] = useState(false);
   const [toggleNav, toggleNavOff] = useState(false);
   const [toggleDoddle, toggleDoddleOff] = useState(false);
   const [toggleFile, toggleFileOff] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
   const classes = useStyle();
   const handle = () => {
     if (toggleNav === false) {
@@ -84,6 +86,19 @@ function Nav({ check, doddle, previlage,blogs}) {
     setdside(false);
     toggleDoddleOff(false);
   };
+
+  const handleUserMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    handleUserMenuClose();
+    if (onLogout) onLogout();
+  };
   return (
     <motion>
       
@@ -108,7 +123,7 @@ function Nav({ check, doddle, previlage,blogs}) {
         </div>
         <motion.ul
           className="NavUl"
-          style={{ transition: "all ease-in-out 3s" }}
+          style={{ transition: "all ease-in-out 0.5s" }}
           initial={{ opacity: "0" }}
           animate={{ opacity: "1" }}
         >
@@ -159,7 +174,54 @@ function Nav({ check, doddle, previlage,blogs}) {
             <Button className={classes.btn}>About</Button>
           </NavLink>
           
+          {/* User Section in Nav */}
+          {user ? (
+            <>
+              <Button
+                onClick={handleUserMenuOpen}
+                startIcon={<AccountCircleIcon />}
+                className={classes.btn}
+                style={{ textTransform: "none" }}
+              >
+                {user.name || user.email}
+              </Button>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleUserMenuClose}
+                style={{marginTop:'8vh'}}
+              >
+                {admin && (
+                  <MenuItem component={Link} to="/admin" onClick={handleUserMenuClose}>
+                    Admin Panel
+                  </MenuItem>
+                )}
+                {admin && (
+                  <MenuItem component={Link} to="/users" onClick={handleUserMenuClose}>
+                    User Management
+                  </MenuItem>
+                )}
+                <MenuItem onClick={handleLogout}>Logout</MenuItem>
+              </Menu>
+            </>
+          ) : (
+            <Button
+              component={Link}
+              to="/admin"
+              variant="contained"
+              className={classes.btn}
+              style={{
+                backgroundColor: "#000",
+                color: "#fff",
+                textTransform: "none",
+              }}
+            >
+              Login
+            </Button>
+          )}
+          
         </motion.ul>
+        
         {check === true? (
           <div
             className="tools"

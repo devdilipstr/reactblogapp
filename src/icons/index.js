@@ -5,3 +5,5 @@ export { default as loading } from "./loading.gif";
 export { default as secure } from "./secure.svg";
 export { default as FooterVector } from "./vector.svg";
 export { default as logo } from "./logo.png";
+export { default as mesection } from "./mesection.svg";
+export { default as mail } from "./mail.svg";

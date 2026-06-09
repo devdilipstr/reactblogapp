@@ -3,7 +3,7 @@ import { Grid, makeStyles } from "@material-ui/core";
 import Contactform from "./Contactform";
 import Contactdetail from "./Contactdetail";
 const style = makeStyles({
-  root: { display: "flex" },
+  root: { display: "flex", marginBottom:"10rem" ,overflow:'hidden'},
   child: { display: "Grid", justifyContent: "center", alignItems: "center" },
 });
 function contact() {

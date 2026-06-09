@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import emailjs from "emailjs-com";
 import {
   makeStyles,
   Paper,
@@ -9,6 +8,8 @@ import {
   TextareaAutosize,
 } from "@material-ui/core";
 import "../style.css";
+import { contactService } from "../services";
+
 const style = makeStyles({
   paper: { maxWidth: "500px", overflow: "hidden" },
   formcontrol: {
@@ -23,43 +24,54 @@ const style = makeStyles({
   text: { border: "0", display: "grid", marginTop: "5%" },
   success: { textAlign: "center", margin: "10%", padding: "10%" },
 });
+
 function Contactform() {
   const classes = style();
-  const [success, setsuccess] = useState(false);
-  const [name, setName] = useState(null);
-  const [sub, setSub] = useState(null);
-  const [mail, setMail] = useState(null);
-  const [message, setMessage] = useState(null);
-  if (success === true) {
-    setTimeout(() => {
-      setsuccess(false);
-    }, 4000);
-  }
-  const send = (e) => {
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState("");
+  const [subject, setSubject] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    emailjs.send(
-      "service_gmmrvgr",
-      "template_ndpmtbb",
-      {
-        name: name,
-        message: message,
-        mail: mail,
-        reply_to: "dilipsuthar74129@gmail.com",
-        subject: sub,
-      },
-      "a8ElFkGYvKukRV13Y"
-    );
-    document.getElementById("form").reset();
-    setsuccess(true);
+    
+    setLoading(true);
+    
+    try {
+      const response = await contactService.submit({
+        name,
+        email,
+        subject,
+        message,
+      });
+      
+      if (response.success) {
+        setSuccess(true);
+        // Reset form after 4 seconds
+        setTimeout(() => {
+          setSuccess(false);
+          setName("");
+          setEmail("");
+          setSubject("");
+          setMessage("");
+        }, 4000);
+      }
+    } catch (error) {
+      alert("Error sending message: " + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
   return (
-    <form onSubmit={send} id="form" style={{ zIndex: "1000" }}>
+    <form onSubmit={handleSubmit} style={{ zIndex: "1000", minWidth:"300px"}}>
       <Paper dark>
-        
-        {success === true ? (
+        {success ? (
           <div className={classes.success}>
-            <h2>We recieved your message.</h2>
-            <small>we will contact you as fast as possible.</small>
+            <h2>We received your message.</h2>
+            <small>We will contact you as fast as possible.</small>
           </div>
         ) : (
           <FormControl className={classes.formcontrol}>
@@ -68,44 +80,47 @@ function Contactform() {
               type="text"
               required
               label="Name"
-              onChange={(e) => {
-                setName(e.target.value);
-              }}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={loading}
             />
             <TextField
-              label="mail address"
-              onChange={(e) => {
-                setMail(e.target.value);
-              }}
+              label="Email address"
+              type="email"
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
             />
             <TextField
               label="Subject"
-              onChange={(e) => {
-                setSub(e.target.value);
-              }}
               required
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              disabled={loading}
             />
             <TextareaAutosize
               className={classes.text}
               placeholder="Enter your message"
+              minRows={4}
+              required
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              disabled={loading}
               onFocus={(e) => {
                 e.target.style.outline = 0;
               }}
-              onChange={(e) => {
-                setMessage(e.target.value);
-              }}
-              required
             />
             <Button
               type="submit"
+              disabled={loading}
               style={{
                 background: "#333333",
                 color: "white",
                 width: "fit-content",
               }}
             >
-              send
+              {loading ? "Sending..." : "Send"}
             </Button>
           </FormControl>
         )}

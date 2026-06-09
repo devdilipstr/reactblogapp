@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import "../style.css";
-import firebase from "./firebase/config";
+import { newsletterService } from "../services";
+
 const styles = makeStyles({
   root: {
     border: "6px solid #f2f2f2",
@@ -10,69 +11,70 @@ const styles = makeStyles({
     borderRadius: "30px",
     fontSize: "15px",
     marginBottom: "0",
-    marginTop: "20px",
+    marginTop: "0",
     padding: "1%",
     textAlign: "center",
     zIndex: "100000",
   },
 });
-function Newsletter({ bcc }) {
-  const contact = [];
+
+function Newsletter() {
   const classes = styles();
-  const [mail, setmail] = useState(null);
-  const [error, seterror] = useState(false);
-  const [added, add] = useState(false);
-  useEffect(() => {
-    const contacts = firebase.database().ref("contacts");
-    contacts.on("value", (snap) => {
-      let array = snap.val();
-      for (let id in array) {
-        bcc(array[id]);
-        contact.push(array[id]);
-      }
-    });
-  }, [bcc, contact]);
-  const Submit = (e) => {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (contact.find((element) => element === mail)) {
-      seterror(true);
-    } else {
-      seterror(false);
-      add(true);
-      const contacts = firebase.database().ref("contacts");
-      contacts.push(mail);
-      e.target.reset();
+    
+    if (!email) return;
+
+    setLoading(true);
+    setError(false);
+    setSuccess(false);
+
+    try {
+      const response = await newsletterService.subscribe(email);
+      
+      if (response.success) {
+        setSuccess(true);
+        setEmail("");
+        e.target.reset();
+        
+        // Hide success message after 5 seconds
+        setTimeout(() => {
+          setSuccess(false);
+        }, 5000);
+      }
+    } catch (err) {
+      setError(true);
+      setErrorMessage(err.message || "This email already exists, try with another one");
+    } finally {
+      setLoading(false);
     }
   };
-  if (added === true) {
-    setTimeout(() => {
-      add(false);
-    }, 5000);
-  }
+
   return (
-    <form onSubmit={Submit}>
-      
+    <form onSubmit={handleSubmit}>
       <input
         type="email"
         className={classes.root}
-        id="inputE"
-        onChange={(e) => {
-          setmail(e.target.value);
-        }}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
         placeholder="Subscribe to our newsletter"
+        disabled={loading}
+        required
       />
-      <br></br>
-      {error === true ? (
-        <small>This email already exist ,try with other one</small>
-      ) : (
-        <></>
-      )}
-      {added === true ? (
-        <small>your Subscription is added to our newsletter.</small>
-      ) : (
-        <></>
+      {error && <small style={{ color: "red", display: "block", marginTop: "10px" }}>{errorMessage}</small>}
+      {success && (
+        <small style={{ color: "green", display: "block", marginTop: "10px" }}>
+          Your subscription is added to our newsletter!
+        </small>
       )}
     </form>
   );
 }
+
 export default Newsletter;

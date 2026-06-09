@@ -1,12 +1,15 @@
-/*dependency imports */ import React, { useState, useEffect } from "react";
+/*dependency imports */
+import React, { useState, useEffect } from "react";
 import { Grid } from "@material-ui/core";
 import "./style.css";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import firebase from "./components/firebase/config";
+import { blogService, showcaseService, authService } from "./services";
 import { loading } from "./icons";
 import Contact from "./components/Contact";
 import About from "./components/About";
-/*componets imports */ import {
+import { mail } from "./icons";
+/*components imports */
+import {
   Nav,
   BlogIntro,
   Showcase,
@@ -14,183 +17,220 @@ import About from "./components/About";
   Footer,
   Blog,
   SecureIn,
-  Panel,
-  Blogs
+  PanelNew,
+  Blogs,
+  UserManagement,
+  Newsletter,
+  Hero
 } from "./components";
+
 const App = () => {
   useEffect(() => {
-    // 👇️ scroll to top on page load
-    window.scrollTo({top: 0, left: 0, behavior: 'smooth'});
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
   }, []);
 
-  const [panel, setpanel] = useState(true);
-  const [blogs, setBlogs] = useState(null);
-  const [text, settext] = useState(null);
-  const [thumb, setthumb] = useState(null);
-  const [heading, setheading] = useState(null);
-  const [time, settime] = useState(null);
-  const [category, setcategory] = useState(null);
-  const [doddle, setdoddle] = useState(null);
-  const [check,setCheck] = useState(false);
-  /*states for admin panel */ const [username, setusername] = useState(null);
-  const [previlage, setprevilage] = useState(false);
-  const [num, setnum] = useState(null);
-  const [bcc, setbcc] = useState(null);
- 
+  const [panel, setPanel] = useState(true);
+  const [blogs, setBlogs] = useState([]);
+  const [showcase, setShowcase] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+
   useEffect(() => {
-    let blogs = firebase.database().ref("blogs");
-    blogs.on("value", (snapshot) => {
-      let array = snapshot.val();
-      let data = [];
-      // for (let id in array) {
-      //   data.push(array);
-      // }
-      setBlogs(array);
-    });
-    let doddle = firebase.database().ref("doddle");
-    doddle.on("value", (snap) => {
-      setdoddle(snap.val());
-    });
-    let bccs = firebase.database().ref("contacts");
-    bccs.on("value",(snapshot)=>{
-      let bccarray=snapshot.val();
-      setbcc(Object.values(bccarray))
-    })
+    // Check if user is logged in
+    const loggedIn = authService.isLoggedIn();
+    setIsLoggedIn(loggedIn);
+    
+    if (loggedIn) {
+      const userData = authService.getStoredUser();
+      setUser(userData);
+    }
+
+    fetchData();
   }, []);
-  console.log(doddle);
- console.log(blogs)
- 
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch blogs (latest 6)
+      const blogsResponse = await blogService.getAll({ limit: 6 });
+      if (blogsResponse.success) {
+        setBlogs(blogsResponse.blogs);
+      }
+
+      // Fetch showcase
+      const showcaseResponse = await showcaseService.getActive();
+      if (showcaseResponse.success && showcaseResponse.showcases.length > 0) {
+        setShowcase(showcaseResponse.showcases[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await authService.logout();
+    setIsLoggedIn(false);
+    setUser(null);
+    window.location.href = '/';
+  };
+
+  if (loading) {
+    return (
+      <img
+        src={loading}
+        alt="loading.."
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      />
+    );
+  }
+
   return (
     <Router>
-      
-      {blogs != null ? (
-        <>
-          
-          <div className="container" style={{ marginTop: "5%",overflow:"hidden"}}>
-            
-            {doddle && (
-              <Nav admin={check} doddle={doddle.doddle} previlage={previlage} blogs={blogs}/>
-            )}
-            <Switch>
-              
-              <Route path="/" exact>
-                
-                {doddle && (
-                  <Showcase
-                    img={doddle.doddle}
-                    heading={doddle.head}
-                    tag={doddle.tag}
-                    bcc={setbcc}
-                  />
-                )}
-                <BlogIntro />
-               
-                  <div id="hello">
-                  <Grid
-                    item
-                    xs="12"
-                    style={{
-                      display: "flex",
-                      padding: "5%",
-                      justifyContent: "center",
-                      
-                    }}
-                  >
-                    
-                    <h1>Latest Blogs</h1>
-                  </Grid>
-                  {/* <Grid
-                    container
-                    md="10"
-                    xs="12"
-                    
-                    spacing={3}
-                    style={{ display: "flex",}} */}
-                  <div className="blogcontainer" id="blogcontainer"  style={{width:"100%",display:"flex",overflowX:"scroll"}}  >
-                    
-                    {blogs != null ? 
-                     
-                      Object.keys(blogs).reverse().slice(0,6).map(function(keyName, keyIndex){
-                        let i = blogs[keyName];
-                        return <div style={{padding:"1%"}}>
-                            
-                              <Blogpop
-                              heading={i.title}
-                              category={i.category}
-                              time={i.time}
-                              thumb={i.thumb}
-                              id={keyName}
-                              />
-                        
-                        </div>
-                        
-                      }
-                      
-                    ) : (
-                      <img src={loading} alt="loading.." />
-                    )}
-                  </div>
-                  </div>
-              </Route>
-              <Route path="/about">
-                
-                <About />
-              </Route>
-              <Route path="/blog">
-                
-                <Blog
-                  text={text}
-                  thumb={thumb}
-                  heading={heading}
-                  time={time}
-                  category={category}
-                />
-              </Route>
-              <Route path="/contact">
-                
-                <Contact />
-              </Route>
-              <Route path="/blogs">
-                <Blogs blogs={blogs}/>
-              </Route>
-              <Route path="/admin">
-                
-                {panel === false ? (
-                  <SecureIn
-                    panel={setpanel}
-                    username={setusername}
-                    previlage={true}
-                    num={setnum}
-                  />
-                ) : (
-                  <Panel
-                    bcc={bcc}
-                    name={username}
-                    previlage={true}
-                    number={num}
-                    blog={blogs}
-                    check={check}
-                    setCheck={setCheck}
-                  />
-                )}
-              </Route>
-            </Switch>
-            <Footer />
-          </div>
-        </>
-      ) : (
-        <img
-          src={loading}
-          alt="loading.."
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-          }}
+      <div className="container" style={{ marginTop: "5%", overflow: "hidden" }}>
+        <Nav 
+          admin={user?.isAdmin || user?.role === 'admin'} 
+          blogs={blogs}
+          user={user}
+          onLogout={handleLogout}
         />
-      )}
+        
+        <Switch>
+          <Route path="/" exact>
+            <Hero />
+            
+            {showcase && <Showcase />}
+            
+            <BlogIntro />
+            
+            <div style={{ padding: "0 5%", marginTop: "60px" }}>
+              <Grid
+                item
+                xs="12"
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  marginBottom: "30px",
+                }}
+              >
+                <h1>Latest Blogs</h1>
+              </Grid>
+              
+              <div 
+                className="blogcontainer" 
+                id="blogcontainer" 
+                style={{ width: "100%", display: "flex", overflowX: "scroll" }}
+              >
+                {blogs && blogs.length > 0 ? (
+                  blogs.map((blog) => (
+                    <div key={blog._id} style={{ padding: "1%" }}>
+                      <Blogpop
+                        heading={blog.title}
+                        category={blog.category}
+                        time={new Date(blog.createdAt).toLocaleDateString()}
+                        thumb={blog.coverImage}
+                        id={blog._id}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <p>No blogs available</p>
+                )}
+              </div>
+            </div>
+            
+            {/* Newsletter Section */}
+            <Grid
+              container
+              justify="center"
+              alignItems="center"
+              spacing={3}
+              style={{
+                padding: "60px 5%",
+                backgroundColor: "#333333",
+                marginTop: "60px",
+                marginBottom: "0",
+                textAlign: "center",
+              }}
+            >
+              <Grid item xs={12} style={{ display: "flex", justifyContent: "center" }}>
+                <img src={mail} alt="Newsletter" style={{ width: "150px", height: "auto" }} />
+              </Grid>
+              
+              <Grid item xs={12} md={8}>
+                <h2 style={{ fontSize: "2.5em", marginBottom: "20px", color: "#fff" }}>
+                  Stay Updated!
+                </h2>
+                <p style={{ fontSize: "1.2em", marginBottom: "30px", color: "#ddd" }}>
+                  Subscribe to our newsletter and never miss our latest blogs and updates.
+                </p>
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <Newsletter />
+                </div>
+              </Grid>
+            </Grid>
+          </Route>
+
+          <Route path="/about">
+            <About />
+          </Route>
+
+          <Route path="/blog">
+            <Blog />
+          </Route>
+
+          <Route path="/contact">
+            <Contact />
+          </Route>
+
+          <Route path="/blogs">
+            <Blogs />
+          </Route>
+
+          <Route path="/users">
+            {isLoggedIn && (user?.isAdmin || user?.role === 'admin') ? (
+              <UserManagement />
+            ) : (
+              <div style={{ textAlign: 'center', padding: '50px' }}>
+                <h2>Access Denied</h2>
+                <p>Admin access required</p>
+              </div>
+            )}
+          </Route>
+
+          <Route path="/admin">
+            {!isLoggedIn ? (
+              <SecureIn
+                panel={(loggedIn) => {
+                  if (loggedIn) {
+                    setIsLoggedIn(true);
+                  }
+                }}
+                username={(name) => setUser({ ...user, name })}
+                previlage={(isAdmin) => setUser({ ...user, isAdmin })}
+                num={(email) => setUser({ ...user, email })}
+              />
+            ) : (
+              <PanelNew 
+                name={user?.name || 'Admin'} 
+                previlage={user?.isAdmin || user?.role === 'admin'}
+              />
+            )}
+          </Route>
+        </Switch>
+        
+        <Footer />
+      </div>
     </Router>
   );
 };
+
 export default App;

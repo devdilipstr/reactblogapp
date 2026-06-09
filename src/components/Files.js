@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
-import firebase from "./firebase/config";
-import { Grid, makeStyles } from "@material-ui/core";
+import React, { useState } from "react";
+import { Grid, makeStyles, CircularProgress,Button } from "@material-ui/core";
 import AddIcon from "@material-ui/icons/Add";
+import uploadService from "../services/uploadService";
 import "../style.css";
+
 const styles = makeStyles({
   root: {
     display: "flex",
@@ -14,32 +15,34 @@ const styles = makeStyles({
     padding: "10%",
   },
 });
+
 function Files() {
   const classes = styles();
-  const [progress, setprogress] = useState(null);
-  const [url, seturl] = useState(null);
-  const [file, setfile] = useState(null);
-  useEffect(() => {
-    if (file != null) {
-      const storageref = firebase.storage().ref(file.name);
-      storageref.put(file).on(
-        "state_changed",
-        (snap) => {
-          let percentage = (snap.bytesTransferred / snap.totalBytes) * 100;
-          setprogress(percentage);
-        },
-        (err) => {
-          console.log(err);
-        },
-        async () => {
-          const url = await storageref.getDownloadURL();
-          seturl(url);
-          setprogress(null);
-          setfile(null);
-        }
-      );
+  const [uploading, setUploading] = useState(false);
+  const [url, setUrl] = useState(null);
+  const [file, setFile] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleFileChange = async (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+
+    setFile(selectedFile);
+    setUploading(true);
+    setError(null);
+
+    try {
+      const response = await uploadService.uploadImage(selectedFile, 'blog');
+      if (response.success) {
+        setUrl(response.url);
+      }
+    } catch (err) {
+      setError(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
     }
-  }, [file]);
+  };
+
   return (
     <Grid container xs="12" md="8" justify="center" className={classes.root}>
       
@@ -59,31 +62,39 @@ function Files() {
           <AddIcon />
           <input
             type="file"
+            accept="image/*"
             style={{ display: "none" }}
-            onChange={(e) => {
-              setfile(e.target.files[0]);
-            }}
+            onChange={handleFileChange}
+            disabled={uploading}
           />
         </label>
       </Grid>
       <Grid xs="11">
-        
         {file && <p>{file.name}</p>}
-        {progress && (
-          <div
-            style={{
-              borderRadius: "10px",
-              height: "5px",
-              width: { progress },
-              background: "grey",
-              transition: "ease-in-out .3s all",
-            }}
-          ></div>
+        {uploading && (
+          <div style={{ textAlign: "center", padding: "20px" }}>
+            <CircularProgress />
+            <p>Uploading...</p>
+          </div>
         )}
+        {error && <p style={{ color: "red" }}>{error}</p>}
       </Grid>
       <Grid xs="12" style={{ display: "flex", overflowX: "scroll" }}>
-        
-        {url && <p style={{ transition: "ease-in-out .3s all" }}>{url}</p>}
+        {url && (
+          <div style={{ width: "100%" }}>
+            <p style={{ wordBreak: "break-all" }}>{url}</p>
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(url);
+                alert("URL copied to clipboard!");
+              }}
+              variant="contained"
+              size="small"
+            >
+              Copy URL
+            </Button>
+          </div>
+        )}
       </Grid>
       <p style={{ opacity: 0.1, textAlign: "center" }}>upload and copy link.</p>
     </Grid>
